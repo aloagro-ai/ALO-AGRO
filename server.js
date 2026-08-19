@@ -6,19 +6,70 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+// ===============================
+// ALO AGRO - PAGE PRINCIPALE
+// ===============================
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
+
+// ===============================
+// NETWAYAJ REPONS IA
+// ===============================
+function cleanResponse(text) {
+
+    if (!text) {
+        return "Mwen pa jwenn yon repons pou kesyon sa a.";
+    }
+
+    let answer = text;
+
+    // Retire Markdown ki pa nesesè
+    answer = answer.replace(/```[\s\S]*?```/g, "");
+    answer = answer.replace(/^#{1,6}\s*/gm, "");
+    answer = answer.replace(/\*\*/g, "");
+    answer = answer.replace(/\*/g, "");
+    answer = answer.replace(/__/g, "");
+    answer = answer.replace(/_/g, " ");
+
+    // Retire tablo Markdown
+    answer = answer.replace(/^\|.*\|$/gm, "");
+    answer = answer.replace(/^\s*\|?[\s:-]+\|[\s|:-]*$/gm, "");
+
+    // Retire espas ki repete
+    answer = answer.replace(/[ \t]+/g, " ");
+
+    // Pa kite plis pase 2 liy vid
+    answer = answer.replace(/\n{3,}/g, "\n\n");
+
+    // Netwaye kòmansman/fen
+    answer = answer.trim();
+
+    return answer;
+}
+
+
+// ===============================
+// API ALO AGRO
+// ===============================
 app.post("/api/chat", async (req, res) => {
+
     try {
+
         const question = req.body.question;
 
-        if (!question) {
+        if (!question || question.trim() === "") {
             return res.status(400).json({
-                answer: "Tanpri ekri yon kesyon."
+                error: "Tanpri ekri yon kesyon."
             });
         }
+
+
+        // ===============================
+        // REQUETE GROQ
+        // ===============================
 
         const response = await fetch(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -31,103 +82,134 @@ app.post("/api/chat", async (req, res) => {
                 },
 
                 body: JSON.stringify({
+
                     model: "openai/gpt-oss-20b",
 
+                    temperature: 0.2,
+
+                    max_tokens: 900,
+
                     messages: [
+
                         {
                             role: "system",
+
                             content: `
-Ou se ALO AGRO, yon asistan IA espesyalize nan agrikilti ak elvaj an Ayiti.
+Ou se ALO AGRO, yon asistan entèlijan espesyalize nan agrikilti ak elvaj ann Ayiti.
 
-Reponn an Kreyòl Ayisyen ki klè, natirèl epi pwofesyonèl.
+Objektif ou se bay repons ki:
+- teknik
+- syantifik
+- egzak
+- pratik
+- kout
+- fasil pou yon peyizan konprann
 
-RÈG OBLIGATWA POU REPONS LA:
+REGLEMAN FÒMA OBLIGATWA:
 
-Fè repons lan kout.
+1. Pa janm itilize Markdown.
 
-Pa fè yon gwo paragraf.
-
-Pa itilize siy sa yo:
+2. Pa itilize:
 #
 *
 _
----
-|
+***
+**
+tablo
+tik Markdown
+lis ak tire
 
-Pa itilize Markdown.
+3. Pa itilize gwo paragraf ki mele.
 
-Pa itilize tablo.
-
-Pa mete plizyè enfòmasyon sou menm liy.
-
-Chak ide dwe kòmanse sou yon nouvo liy.
-
-Mete yon liy vid ant chak pati.
-
-Si gen plizyè etap, itilize sèlman nimewo:
+4. Divize repons lan an ti seksyon nimewote:
 1.
 2.
 3.
 4.
+5.
 
-Si gen detay anba yon etap, mete yo sou nouvo liy san lèt a, b, c.
+5. Lè yon seksyon bezwen plis detay, itilize:
+a)
+b)
+c)
+d)
 
-Egzanp fason ou dwe reponn:
+6. Chak pwen dwe kout e dirèk.
+
+7. Mete non seksyon an apre nimewo a.
+
+Egzanp:
 
 1. Preparasyon tè
-
-Netwaye tè a epi retire move zèb ak wòch.
-
-Tè a dwe gen bon drenaj pou dlo pa rete ladan l.
+a) Netwaye tè a epi retire move zèb.
+b) Verifye drenaj tè a.
+c) Si posib, fè yon analiz tè.
 
 2. Preparasyon grenn
+a) Chwazi grenn ki an sante.
+b) Chwazi yon varyete ki adapte ak zòn nan.
 
-Chwazi grenn ki an sante epi ki adapte ak zòn nan.
+8. Pa repete menm enfòmasyon an.
 
-3. Plantasyon
+9. Pa envante non varyete, kantite angrè, medikaman oswa sous syantifik.
 
-Fè twou anviwon 3 a 5 cm fon.
+10. Lè ou bay yon kantite oswa yon dòz, presize inite a.
 
-Mete yon grenn nan chak twou.
+11. Pou kesyon agrikilti, itilize enfòmasyon syantifik jeneral ki aksepte nan agronomi.
 
-Kite ase espas ant plant yo.
+12. Lè li nesesè, site sous serye tankou FAO, CIMMYT, IITA oswa lòt enstitisyon agrikòl rekonèt. Pa envante referans.
 
-4. Swen
+13. Repons lan dwe an Kreyòl Ayisyen si moun nan pale Kreyòl.
 
-Bay plant yo dlo lè tè a sèk.
+14. Pa kòmanse repons lan ak "ALO AGRO:" paske sistèm lan deja mete non an.
 
-Kontwole move zèb ak ensèk.
+15. Pa mete "Bonjou" nan chak repons.
 
-5. Rekòt
-
-Rekòlte mayi a lè li rive nan matirite.
-
-Pa bay enfòmasyon ou pa sèten.
-
-Pa envante non varyete, non òganizasyon oswa referans.
-
-Lè yon kesyon mande konsèy medikal pou bèt oswa tretman maladi, konseye itilizatè a kontakte yon veterinè.
-
-Lè yon enfòmasyon bezwen plis presizyon selon zòn nan, mande itilizatè a ki depatman oswa lokalite li ye.
-
-Nan fen chak repons, mete sèlman:
-
+16. Nan fen repons lan, mete sèlman:
 Èske ou satisfè ak repons sa a?
+
+17. Pa ajoute okenn lòt fraz apre kesyon sa a.
+
+18. Pa fè repons lan twò long. Bay sèlman enfòmasyon ki nesesè pou reponn kesyon an.
+
 `
                         },
 
                         {
                             role: "user",
-                            content: question
+                            content: question.trim()
                         }
+
                     ]
+
                 })
             }
         );
 
+
+        // ===============================
+        // LI REPONS GROQ
+        // ===============================
+
         const data = await response.json();
 
+
         console.log("GROQ RESPONSE:", JSON.stringify(data));
+
+
+        // ===============================
+        // VERIFYE ERÈ GROQ
+        // ===============================
+
+        if (!response.ok) {
+
+            console.error("GROQ ERROR:", data);
+
+            return res.status(500).json({
+                error: "ALO AGRO pa kapab jwenn repons lan kounye a."
+            });
+        }
+
 
         if (
             !data.choices ||
@@ -135,47 +217,51 @@ Nan fen chak repons, mete sèlman:
             !data.choices[0].message ||
             !data.choices[0].message.content
         ) {
+
+            console.error("Repons Groq pa gen kontni:", data);
+
             return res.status(500).json({
-                answer: "Mwen pa kapab jwenn repons lan kounye a. Tanpri eseye ankò."
+                error: "ALO AGRO pa jwenn repons IA a."
             });
         }
 
-        let answer = data.choices[0].message.content;
 
-        // Retire Markdown
-        answer = answer
-            .replace(/```[\s\S]*?```/g, "")
-            .replace(/#{1,6}\s?/g, "")
-            .replace(/\*\*/g, "")
-            .replace(/\*/g, "")
-            .replace(/__/g, "")
-            .replace(/_/g, "")
-            .replace(/^[-—]+\s*/gm, "")
-            .replace(/\|/g, "")
-            .trim();
+        // ===============================
+        // NETWAYE REPONS LAN
+        // ===============================
 
-        // Netwaye espas ki twòp
-        answer = answer
-            .replace(/\r/g, "")
-            .replace(/[ \t]+/g, " ")
-            .replace(/\n{3,}/g, "\n\n")
-            .trim();
+        const answer = cleanResponse(
+            data.choices[0].message.content
+        );
+
+
+        // ===============================
+        // RETOUNEN REPONS LAN
+        // ===============================
 
         res.json({
             answer: answer
         });
 
+
     } catch (error) {
 
-        console.error("ERÈ ALO AGRO:", error);
+        console.error("SERVER ERROR:", error);
 
         res.status(500).json({
-            answer: "ALO AGRO pa kapab reponn kounye a. Tanpri eseye ankò."
+            error: "ALO AGRO pa kapab reponn kounye a."
         });
+
     }
+
 });
 
-const PORT = process.env.PORT || 3000;
+
+// ===============================
+// PORT RENDER
+// ===============================
+
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
     console.log(`ALO AGRO ap mache sou pò ${PORT}`);
