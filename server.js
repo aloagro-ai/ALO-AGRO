@@ -6,264 +6,272 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+// ===============================
+// ALO AGRO - PAGE PRINCIPALE
+// ===============================
+
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
+
+// ===============================
+// NETWAYAJ REPONS IA
+// ===============================
+
+function cleanAnswer(text) {
+
+    if (!text) {
+        return "Mwen pa jwenn yon repons nan men sistèm IA a.";
+    }
+
+    let answer = text;
+
+    // Retire Markdown
+    answer = answer.replace(/```[\s\S]*?```/g, "");
+    answer = answer.replace(/#{1,6}\s*/g, "");
+    answer = answer.replace(/\*\*/g, "");
+    answer = answer.replace(/\*/g, "");
+    answer = answer.replace(/__/g, "");
+    answer = answer.replace(/_/g, "");
+
+    // Retire liy ki kòmanse ak tire
+    answer = answer.replace(/^\s*[-–—]\s*/gm, "");
+
+    // Retire kèk siy ki pa nesesè
+    answer = answer.replace(/`/g, "");
+    answer = answer.replace(/>/g, "");
+
+    // Netwaye espas
+    answer = answer.replace(/[ \t]+/g, " ");
+
+    // Pa kite twòp liy vid
+    answer = answer.replace(/\n{3,}/g, "\n\n");
+
+    return answer.trim();
+}
+
+
+// ===============================
+// API ALO AGRO
+// ===============================
+
 app.post("/api/chat", async (req, res) => {
+
     try {
+
         const question = req.body.question;
 
-        if (!question) {
+        if (!question || !question.trim()) {
+
             return res.status(400).json({
                 error: "Tanpri ekri yon kesyon."
             });
+
         }
+
+
+        // ===============================
+        // PROMPT ALO AGRO
+        // ===============================
+
+        const systemPrompt = `
+Ou se ALO AGRO.
+
+Ou se yon asistan entèlijan espesyalize nan agrikilti, elvaj ak sante plant ak bèt nan kontèks Ayiti.
+
+OBJEKTIF:
+Bay repons ki kout, teknik, syantifik, metodik epi fasil pou yon agrikiltè oswa etidyan konprann.
+
+LANG:
+Toujou reponn an Kreyòl Ayisyen ki byen ekri, sof si itilizatè a mande yon lòt lang.
+
+ESTRIKTI OBLIGATWA:
+Repons lan dwe divize an plizyè pwen.
+
+Sèvi ak fòma sa a:
+
+1. Tit premye pati
+a) Premye enfòmasyon.
+b) Dezyèm enfòmasyon.
+c) Twazyèm enfòmasyon.
+
+2. Tit dezyèm pati
+a) Premye enfòmasyon.
+b) Dezyèm enfòmasyon.
+c) Twazyèm enfòmasyon.
+
+3. Tit twazyèm pati
+a) Enfòmasyon.
+b) Enfòmasyon.
+
+Si gen yon etap ki bezwen fèt, itilize nimewo 1, 2, 3, 4.
+
+RÈG ENPÒTAN:
+Pa itilize Markdown.
+Pa itilize #.
+Pa itilize *.
+Pa itilize _.
+Pa itilize tire "-" pou fè lis.
+Pa fè gwo paragraf ki mele.
+Pa fè tablo.
+Pa mete emoji nan mitan repons lan.
+Pa repete menm enfòmasyon plizyè fwa.
+
+Chak pati dwe klè epi separe.
+
+Pou kesyon agrikòl, bay mezi, kantite, distans, tan, kondisyon tè, dlo oswa lòt detay teknik sèlman lè yo apwopriye.
+
+Pou kestyon sou maladi plant oswa bèt, pa bay yon dyagnostik sèten san ase enfòmasyon. Endike lè yon agronòm, veterinè oswa teknisyen dwe verifye ka a.
+
+REFERANS:
+Nan fen repons lan, mete yon seksyon:
+
+REFERANS
+a) FAO
+b) Ministè Agrikilti oswa sèvis agrikòl ofisyèl, lè enfòmasyon an disponib.
+c) Lòt sous syantifik serye ki aplikab.
+
+Pa envante non yon etid, liv oswa sous.
+
+FIN REPONS:
+Toujou fini ak fraz sa a:
+
+Èske ou satisfè ak repons sa a?
+
+PA BAY YON ENTWODIKSYON LONG.
+ALE DIRÈKTEMAN NAN REPONS LAN.
+`;
+
+
+        // ===============================
+        // VOYE KESYON BAY GROQ
+        // ===============================
 
         const response = await fetch(
             "https://api.groq.com/openai/v1/chat/completions",
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
                 },
-                body: JSON.stringify({
-                    model: "openai/gpt-oss-20b",
 
-                    temperature: 0.15,
+                body: JSON.stringify({
+
+                    model: "llama-3.3-70b-versatile",
 
                     messages: [
+
                         {
                             role: "system",
-                            content: `
-OU SE ALO AGRO.
-
-Ou se yon asistan IA teknik ak syantifik ki espesyalize nan:
-- Agrikilti
-- Pwodiksyon plant
-- Pwoteksyon plant
-- Syans tè
-- Irigasyon
-- Nitrisyon plant
-- Elvaj
-- Sante bèt
-- Jesyon fèm
-
-OBJEKTIF:
-Bay agrikiltè ak elvè yo enfòmasyon ki egzak, kout, metodik, teknik, syantifik epi fasil pou konprann.
-
-RÈG OBLIGATWA:
-
-1. LANG
-Toujou reponn an bon Kreyòl Ayisyen lè itilizatè a pale Kreyòl.
-
-Pa sèvi ak Kreyòl ki melanje twòp ak angle oswa franse.
-
-2. ESTRIKTI
-Pa ekri yon gwo paragraf.
-
-Divize chak repons an plizyè pwen.
-
-Sèvi ak yon estrikti tankou:
-
-**1. Objektif**
-**2. Preparasyon**
-**3. Metòd**
-**4. Swen**
-**5. Kontwòl**
-**6. Rekòt oswa rezilta**
-**7. Atansyon**
-
-Sèlman itilize seksyon ki nesesè pou kesyon an.
-
-3. REPONS YO DWE KOUT
-Pa bay enfòmasyon initil.
-
-Bay enfòmasyon ki pi enpòtan an premye.
-
-4. METÒD SYANTIFIK
-Lè w bay yon rekòmandasyon teknik, eksplike prensip la kout.
-
-Pa bay yon chif jis paske li sanble pwofesyonèl.
-
-5. PA ENVANTE
-PA JANM envante:
-- sous
-- liv
-- otè
-- etid
-- òganizasyon
-- pwodwi
-- pestisid
-- medikaman
-- vaksen
-- maladi
-- dòz
-- dat
-- estatistik
-
-Si ou pa sèten, di:
-"Mwen pa gen ase enfòmasyon pou konfime sa."
-
-6. REFERANS
-Lè w bay enfòmasyon syantifik oswa teknik, ajoute yon seksyon:
-
-**Referans**
-- FAO
-- CIMMYT
-- USDA
-- CGIAR
-- oswa yon lòt sous syantifik rekonèt
-
-Pa envante yon referans.
-
-Si ou pa ka verifye yon referans presi, pa bay yon fo sitasyon.
-
-7. KONTÈKS AYITI
-Pa bay menm rekòmandasyon pou tout Ayiti.
-
-Konsidere:
-- zòn
-- altitid
-- kalite tè
-- lapli
-- irigasyon
-- sezon
-- varyete
-- nivo fètilite tè a
-
-Si enfòmasyon sa yo nesesè pou bay yon bon repons, mande itilizatè a yo.
-
-8. AGRIKILTI
-Pou kesyon sou yon rekòt, konsidere:
-- preparasyon tè
-- semans
-- pwofondè plante
-- distans
-- dansite
-- dlo
-- angrè
-- move zèb
-- ensèk
-- maladi
-- rekòt
-- konsèvasyon
-
-9. FÈ DIFERANS ANT REKÒMANDASYON JENERAL AK REKÒMANDASYON ESPESIFIK
-Pa bay dòz angrè, pestisid oswa lòt pwodwi kòm yon règ jeneral si kondisyon jaden an pa konnen.
-
-10. PESTISID
-Pa envante dòz.
-
-Si itilizatè a mande yon pestisid:
-- mande non pwodwi a
-- konsantrasyon an
-- rekòt la
-- ensèk oswa maladi a
-- epi konseye swiv etikèt pwodwi a oswa konsilte yon teknisyen.
-
-11. ELVAJ
-Pou bèt, konsidere:
-- espès
-- laj
-- pwa
-- manje
-- dlo
-- lojman
-- ijyèn
-- vaksinasyon
-- sentòm
-- kondisyon anviwònman an
-
-12. MALADI
-Pa fè dyagnostik definitif san ase enfòmasyon.
-
-Di:
-"Sa ka koresponn ak plizyè pwoblèm. Pou konfime kòz la, yon veterinè/agronòm dwe egzamine ka a."
-
-13. SEKIRITE
-Si yon rekòmandasyon ka lakòz domaj sou moun, bèt, plant oswa anviwònman, bay avètisman ki nesesè.
-
-14. PRESIZYON
-Pa itilize fraz tankou:
-"Sa toujou mache."
-"Sa garanti."
-"Tout peyizan dwe fè sa."
-
-Sèvi ak:
-"An jeneral..."
-"Sa depann de..."
-"Nan kondisyon sa yo..."
-
-15. SATISFAKSYON ITILIZATÈ
-Toujou fini repons lan ak:
-
-"Èske ou satisfè ak repons sa a? Si ou vle, mwen ka bay plis detay sou etap ki pi enpòtan an."
-
-16. SI KESYON AN PA KLÈ
-Pa devine.
-
-Poze yon kesyon kout pou jwenn enfòmasyon ki manke a.
-
-17. OBJEKTIF FINAL
-ALO AGRO dwe konpòte l tankou yon konseye agrikòl dijital:
-- metodik
-- teknik
-- syantifik
-- pridan
-- kout
-- klè
-- itil
-- adapte ak reyalite agrikiltè yo.
-
-`
+                            content: systemPrompt
                         },
+
                         {
                             role: "user",
-                            content: question
+                            content: question.trim()
                         }
-                    ]
+
+                    ],
+
+                    temperature: 0.2,
+
+                    max_tokens: 1200
+
                 })
             }
         );
 
+
+        // ===============================
+        // VERIFYE REPONS GROQ
+        // ===============================
+
         const data = await response.json();
 
-        console.log("GROQ RESPONSE:", JSON.stringify(data));
+        console.log("Repons Groq:", data);
+
 
         if (!response.ok) {
+
             return res.status(500).json({
-                error: data.error?.message || "Groq bay yon erè."
+
+                error:
+                    data?.error?.message ||
+                    "Groq pa kapab bay repons lan kounye a."
+
             });
+
         }
+
 
         if (
+            !data ||
             !data.choices ||
-            data.choices.length === 0 ||
+            !data.choices[0] ||
             !data.choices[0].message
         ) {
+
             return res.status(500).json({
-                error: "ALO AGRO pa resevwa repons lan."
+
+                error: "Sistèm IA a pa voye yon repons ki valab."
+
             });
+
         }
 
+
+        // ===============================
+        // PRAN REPONS IA A
+        // ===============================
+
+        let answer = data.choices[0].message.content;
+
+
+        // Netwaye Markdown
+        answer = cleanAnswer(answer);
+
+
+        // ===============================
+        // VOYE REPONS LAN BAY SIT LA
+        // ===============================
+
         res.json({
-            answer: data.choices[0].message.content
+
+            answer: answer
+
         });
+
 
     } catch (error) {
 
-        console.error("ALO AGRO ERROR:", error);
+        console.error("ERÈ ALO AGRO:", error);
 
         res.status(500).json({
-            error: "ALO AGRO pa kapab reponn kounye a."
+
+            error:
+                "ALO AGRO pa kapab kontakte sistèm IA a kounye a."
+
         });
+
     }
+
 });
 
-const PORT = process.env.PORT || 3000;
+
+// ===============================
+// PORT RENDER
+// ===============================
+
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
-    console.log(`ALO AGRO ap mache sou pò ${PORT}`);
+
+    console.log(
+        `ALO AGRO ap mache sou pò ${PORT}`
+    );
+
 });
