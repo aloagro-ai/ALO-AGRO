@@ -6,12 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Montre paj ALO AGRO
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
-// API ALO AGRO
 app.post("/api/chat", async (req, res) => {
     try {
         const question = req.body.question;
@@ -48,12 +46,26 @@ app.post("/api/chat", async (req, res) => {
 
         const data = await response.json();
 
+        console.log("Repons Groq:", data);
+
+        if (!response.ok) {
+            return res.status(500).json({
+                error: data.error?.message || "Groq pa kapab reponn kounye a."
+            });
+        }
+
+        if (!data.choices || !data.choices[0]) {
+            return res.status(500).json({
+                error: "Groq pa retounen yon repons valab."
+            });
+        }
+
         res.json({
             answer: data.choices[0].message.content
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("ERÈ:", error);
 
         res.status(500).json({
             error: "ALO AGRO pa kapab reponn kounye a."
