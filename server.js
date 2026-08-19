@@ -29,11 +29,11 @@ app.post("/api/chat", async (req, res) => {
                     "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: "llama-3.1-8b-instant",
+                    model: "openai/gpt-oss-20b",
                     messages: [
                         {
                             role: "system",
-                            content: "Ou se ALO AGRO, yon asistan IA espesyalize nan agrikilti ak elvaj an Ayiti. Reponn an Kreyòl Ayisyen. Bay repons klè, pratik ak itil."
+                            content: "Ou se ALO AGRO, yon asistan IA espesyalize nan agrikilti ak elvaj an Ayiti. Reponn an Kreyòl Ayisyen. Bay repons ki klè, pratik, presi ak fasil pou konprann."
                         },
                         {
                             role: "user",
@@ -46,17 +46,21 @@ app.post("/api/chat", async (req, res) => {
 
         const data = await response.json();
 
-        console.log("GROQ:", JSON.stringify(data));
+        console.log("GROQ RESPONSE:", JSON.stringify(data));
 
         if (!response.ok) {
-            return res.status(response.status).json({
+            return res.status(500).json({
                 error: data.error?.message || "Groq bay yon erè."
             });
         }
 
-        if (!data.choices || !data.choices.length) {
+        if (
+            !data.choices ||
+            data.choices.length === 0 ||
+            !data.choices[0].message
+        ) {
             return res.status(500).json({
-                error: "Groq pa voye okenn repons."
+                error: "ALO AGRO pa resevwa yon repons nan men Groq."
             });
         }
 
@@ -65,7 +69,8 @@ app.post("/api/chat", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("ERÈ:", error);
+
+        console.error("ALO AGRO ERROR:", error);
 
         res.status(500).json({
             error: error.message
