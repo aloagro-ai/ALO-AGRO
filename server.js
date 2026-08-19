@@ -33,7 +33,7 @@ app.post("/api/chat", async (req, res) => {
                     messages: [
                         {
                             role: "system",
-                            content: "Ou se ALO AGRO, yon asistan IA espesyalize nan agrikilti ak elvaj an Ayiti. Reponn an Kreyòl Ayisyen."
+                            content: "Ou se ALO AGRO, yon asistan IA espesyalize nan agrikilti ak elvaj an Ayiti. Reponn an Kreyòl Ayisyen. Bay repons ki klè, pratik ak responsab."
                         },
                         {
                             role: "user",
@@ -46,29 +46,31 @@ app.post("/api/chat", async (req, res) => {
 
         const data = await response.json();
 
-        console.log("Repons Groq:", data);
+        console.log("GROQ RESPONSE:", JSON.stringify(data));
 
         if (!response.ok) {
             return res.status(500).json({
-                error: data.error?.message || "Groq pa kapab reponn kounye a."
+                error: data.error?.message || "Erè Groq API."
             });
         }
 
-        if (!data.choices || !data.choices[0]) {
+        const answer = data.choices?.[0]?.message?.content;
+
+        if (!answer) {
             return res.status(500).json({
-                error: "Groq pa retounen yon repons valab."
+                error: "Groq pa retounen repons lan."
             });
         }
 
         res.json({
-            answer: data.choices[0].message.content
+            answer: answer
         });
 
     } catch (error) {
-        console.error("ERÈ:", error);
+        console.error("SERVER ERROR:", error);
 
         res.status(500).json({
-            error: "ALO AGRO pa kapab reponn kounye a."
+            error: "ALO AGRO pa kapab konekte ak IA a kounye a."
         });
     }
 });
