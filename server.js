@@ -6,12 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Paj prensipal ALO AGRO
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
-// API ALO AGRO
 app.post("/api/chat", async (req, res) => {
     try {
         const question = req.body.question;
@@ -26,19 +24,16 @@ app.post("/api/chat", async (req, res) => {
             "https://api.groq.com/openai/v1/chat/completions",
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
                 },
-
                 body: JSON.stringify({
                     model: "llama-3.1-8b-instant",
-
                     messages: [
                         {
                             role: "system",
-                            content: "Ou se ALO AGRO, yon asistan IA espesyalize nan agrikilti ak elvaj an Ayiti. Reponn an Kreyòl Ayisyen. Bay repons ki klè, pratik ak fasil pou konprann."
+                            content: "Ou se ALO AGRO, yon asistan IA espesyalize nan agrikilti ak elvaj an Ayiti. Reponn an Kreyòl Ayisyen. Bay repons klè, pratik ak itil."
                         },
                         {
                             role: "user",
@@ -51,32 +46,29 @@ app.post("/api/chat", async (req, res) => {
 
         const data = await response.json();
 
-        console.log("Repons Groq:", data);
+        console.log("GROQ:", JSON.stringify(data));
 
         if (!response.ok) {
-            return res.status(500).json({
-                error: data.error?.message || "Groq pa kapab reponn."
+            return res.status(response.status).json({
+                error: data.error?.message || "Groq bay yon erè."
             });
         }
 
-        const answer = data.choices?.[0]?.message?.content;
-
-        if (!answer) {
+        if (!data.choices || !data.choices.length) {
             return res.status(500).json({
-                error: "ALO AGRO pa jwenn repons nan men Groq."
+                error: "Groq pa voye okenn repons."
             });
         }
 
         res.json({
-            answer: answer
+            answer: data.choices[0].message.content
         });
 
     } catch (error) {
-
-        console.error("ERÈ ALO AGRO:", error);
+        console.error("ERÈ:", error);
 
         res.status(500).json({
-            error: "ALO AGRO pa kapab reponn kounye a."
+            error: error.message
         });
     }
 });
