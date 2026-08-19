@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALO AGRO</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f8f3;
+            color: #173b25;
+        }
+
+        header {
+            background: #16803c;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        header p {
+            margin: 8px 0 0;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 60px 20px 30px;
+        }
+
+        .hero h2 {
+            font-size: 42px;
+            margin-bottom: 15px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #53665a;
+        }
+
+        .chat {
+            max-width: 700px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        #messages {
+            min-height: 150px;
+            padding: 15px;
+            background: #f5f9f5;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+        }
+
+        .bot {
+            background: #dff2e3;
+        }
+
+        .user {
+            background: #16803c;
+            color: white;
+            text-align: right;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #16803c;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0f602d;
+        }
+
+        .services {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+        }
+
+        .card h3 {
+            color: #16803c;
+        }
+
+        footer {
+            margin-top: 50px;
+            background: #12351f;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        @media (max-width: 700px) {
+            .cards {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .hero h2 {
+                font-size: 32px;
+            }
+
+            .input-area {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🌱 ALO AGRO</h1>
+    <p>Teknoloji nan sèvis agrikilti</p>
+</header>
+
+<section class="hero">
+
+    <h2>Bonjou, mwen se ALO AGRO 🤖</h2>
+
+    <p>
+        Asistan IA ou pou agrikilti ak elvaj.
+        Poze m nenpòt kesyon sou agrikilti.
+    </p>
+
+    <div class="chat">
+
+        <div id="messages">
+
+            <div class="message bot">
+                <strong>ALO AGRO:</strong>
+                Bonjou! 🌱 Kijan mwen ka ede w jodi a?
+            </div>
+
+        </div>
+
+        <div class="input-area">
+
+            <input
+                type="text"
+                id="question"
+                placeholder="Ekri kesyon ou la..."
+            >
+
+            <button onclick="askQuestion()">
+                Mande ALO AGRO
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="services">
+
+    <h2>Sa ALO AGRO kapab ede w fè</h2>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>🌱 Plant</h3>
+            <p>
+                Konsèy sou plante, angrè,
+                irigasyon ak swen plant.
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>🐖 Elvaj</h3>
+            <p>
+                Enfòmasyon sou kochon,
+                poul, bèf, kabrit ak lòt bèt.
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>🦠 Maladi</h3>
+            <p>
+                Ede konprann sentòm ak
+                pwoblèm plant ak bèt.
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>📚 Aprantisaj</h3>
+            <p>
+                Eksplikasyon pou etidyan
+                ak moun k ap aprann agrikilti.
+            </p>
+        </div>
+
+    </div>
+
+</section>
+
+<footer>
+
+    <p>© 2026 ALO AGRO</p>
+    <p>Asistan IA pou agrikilti ak elvaj an Ayiti 🇭🇹</p>
+
+</footer>
+
+<script>
+
+function askQuestion() {
+
+    let input = document.getElementById("question");
+
+    let question = input.value.trim();
+
+    if (question === "") {
+        return;
+    }
+
+    let messages = document.getElementById("messages");
+
+    messages.innerHTML += `
+        <div class="message user">
+            ${question}
+        </div>
+    `;
+
+    input.value = "";
+
+    setTimeout(function() {
+
+        messages.innerHTML += `
+            <div class="message bot">
+                <strong>ALO AGRO:</strong>
+                Mwen resevwa kesyon ou a. 🤖
+                Nan pwochen etap la, n ap konekte mwen ak
+                yon vrè modèl IA pou m ka ba w repons
+                agrikòl entèlijan.
+            </div>
+        `;
+
+    }, 700);
+
+}
+
+</script>
+
+</body>
+</html>
