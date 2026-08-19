@@ -25,10 +25,6 @@
             font-size: 32px;
         }
 
-        header p {
-            margin: 8px 0 0;
-        }
-
         .hero {
             text-align: center;
             padding: 60px 20px 30px;
@@ -36,7 +32,6 @@
 
         .hero h2 {
             font-size: 42px;
-            margin-bottom: 15px;
         }
 
         .hero p {
@@ -59,6 +54,7 @@
             background: #f5f9f5;
             border-radius: 12px;
             margin-bottom: 15px;
+            text-align: left;
         }
 
         .message {
@@ -100,10 +96,6 @@
             font-weight: bold;
         }
 
-        button:hover {
-            background: #0f602d;
-        }
-
         .services {
             max-width: 1000px;
             margin: 40px auto;
@@ -115,14 +107,12 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 15px;
-            margin-top: 25px;
         }
 
         .card {
             background: white;
             padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.06);
         }
 
         .card h3 {
@@ -142,12 +132,12 @@
                 grid-template-columns: 1fr 1fr;
             }
 
-            .hero h2 {
-                font-size: 32px;
-            }
-
             .input-area {
                 flex-direction: column;
+            }
+
+            .hero h2 {
+                font-size: 32px;
             }
         }
     </style>
@@ -172,12 +162,10 @@
     <div class="chat">
 
         <div id="messages">
-
             <div class="message bot">
-                <strong>ALO AGRO:</strong>
+                <strong>ALO AGRO:</strong><br>
                 Bonjou! 🌱 Kijan mwen ka ede w jodi a?
             </div>
-
         </div>
 
         <div class="input-area">
@@ -206,34 +194,22 @@
 
         <div class="card">
             <h3>🌱 Plant</h3>
-            <p>
-                Konsèy sou plante, angrè,
-                irigasyon ak swen plant.
-            </p>
+            <p>Konsèy sou plante, angrè, irigasyon ak swen plant.</p>
         </div>
 
         <div class="card">
             <h3>🐖 Elvaj</h3>
-            <p>
-                Enfòmasyon sou kochon,
-                poul, bèf, kabrit ak lòt bèt.
-            </p>
+            <p>Enfòmasyon sou kochon, poul, bèf, kabrit ak lòt bèt.</p>
         </div>
 
         <div class="card">
             <h3>🦠 Maladi</h3>
-            <p>
-                Ede konprann sentòm ak
-                pwoblèm plant ak bèt.
-            </p>
+            <p>Ede konprann pwoblèm plant ak bèt.</p>
         </div>
 
         <div class="card">
             <h3>📚 Aprantisaj</h3>
-            <p>
-                Eksplikasyon pou etidyan
-                ak moun k ap aprann agrikilti.
-            </p>
+            <p>Eksplikasyon pou etidyan ak moun k ap aprann agrikilti.</p>
         </div>
 
     </div>
@@ -241,25 +217,20 @@
 </section>
 
 <footer>
-
     <p>© 2026 ALO AGRO</p>
     <p>Asistan IA pou agrikilti ak elvaj an Ayiti 🇭🇹</p>
-
 </footer>
 
 <script>
 
-function askQuestion() {
+async function askQuestion() {
 
-    let input = document.getElementById("question");
+    const input = document.getElementById("question");
+    const question = input.value.trim();
 
-    let question = input.value.trim();
+    if (!question) return;
 
-    if (question === "") {
-        return;
-    }
-
-    let messages = document.getElementById("messages");
+    const messages = document.getElementById("messages");
 
     messages.innerHTML += `
         <div class="message user">
@@ -269,20 +240,38 @@ function askQuestion() {
 
     input.value = "";
 
-    setTimeout(function() {
+    const loading = document.createElement("div");
+    loading.className = "message bot";
+    loading.innerHTML = "<strong>ALO AGRO:</strong><br>M ap reflechi... 🤖";
+    messages.appendChild(loading);
 
-        messages.innerHTML += `
-            <div class="message bot">
-                <strong>ALO AGRO:</strong>
-                Mwen resevwa kesyon ou a. 🤖
-                Nan pwochen etap la, n ap konekte mwen ak
-                yon vrè modèl IA pou m ka ba w repons
-                agrikòl entèlijan.
-            </div>
+    try {
+
+        const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: question
+            })
+        });
+
+        const data = await response.json();
+
+        loading.innerHTML = `
+            <strong>ALO AGRO:</strong><br>
+            ${data.answer || "Mwen pa jwenn repons lan."}
         `;
 
-    }, 700);
+    } catch (error) {
 
+        loading.innerHTML = `
+            <strong>ALO AGRO:</strong><br>
+            Gen yon pwoblèm koneksyon. Eseye ankò.
+        `;
+
+    }
 }
 
 </script>
